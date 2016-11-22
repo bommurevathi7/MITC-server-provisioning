@@ -1,0 +1,338 @@
+<form name="applicationForm" id="application_form" method="post" ng-submit="checkEligibility()" novalidate >
+  <h1>MAGI in the Cloud</h1>
+  <div class="form-fields-area">
+    <div class="form-row">
+      <label for="state">State</label>
+      <select selector ng-model="application.state" name="state" id="state" ng-options="state as state.name for state in appStates" required>
+        <option value="" selected></option>
+      </select>
+      <label for="state" class="error" ng-show="(applicationForm.state.$dirty  || submitted) && applicationForm.state.$invalid">Please enter a State</label>
+    </div>
+    <div class="form-row">
+      <label for="applicationYear">Application year<br>(year starts April 1)</label>
+      <select selector ng-model="application.applicationYear" name="applicationYear" id="applicationYear" ng-options="year for year in appYears" required>
+      </select>
+    </div>
+  </div>
+  <div id="submit_disabled_text" class="short-notice-area" ng-show="disableSubmit()">
+    <h2 class="splash-header" style="text-align: center">SORRY!</h2>
+
+    <span class="splash-emphasis">As of March 1, 2015, the MAGI Software is no longer publicly supported except to NESCSO members.</span> The state you have selected is not a NESCSO member at this time. The MAGI Software is available for demonstration purposes to non-members, but you will not be able to submit the application or view eligibility results.
+
+    <br><br>
+
+    States may access the MAGI Software and certain technical consulting and support services pursuant to the terms of the NESCSO Membership Agreement. <span class="splash-emphasis">You can download a copy of the Membership Agreement by clicking <a class="splash-link" href="https://s3.amazonaws.com/bluelabs-mitc/NESCSO+Membership+Agreement.pdf">here</a>.</span> If you have any questions about becoming a member or the Membership Agreement, please email <a class="splash-link" href="mailto:Brenda.Harvey@umassmed.edu">Brenda.Harvey@umassmed.edu</a>.
+  </div>
+  <div id="privacy_notice_text" class="short-notice-area" ng-show="!(disableSubmit())">
+    <h2 class="splash-header" style="text-align: center">IMPORTANT NOTICE</h2>
+    The form below collects information about applicants in order to determine whether they are eligible for the Medicaid or Children's Health Insurance Programs.
+
+    <br><br>
+
+    We do not collect an applicant's name, address, birthdate, Social Security number or any other 'personally identifying information' as defined by the Health Insurance Portability and Accountability Act of 1996.
+
+    <br><br>
+
+    <span class="splash-emphasis">Please do <u>not</u> enter any personally identifying information in the form below.</span>
+  </div>
+  <fieldset ng-form name="applicantForm" ng-repeat="applicant in applicants" ng-controller="ApplicantController">
+    <legend><span class="applicant-number">{{ applicant.getName() }}</span></legend>
+    <div class="applicant-relationship-fields" ng-repeat="relationship in applicant.relationships">
+      <div class="form-row" >
+        <label>Relationship to {{relationship.otherApplicant.getName()}}</label>
+        <select selector ng-model="relationship.code" ng-options="rc.code as rc.label for rc in relationshipCodes" ng-change="updateRelationship(relationship)">
+        </select>
+      </div>
+    </div>
+    <div class="form-row">
+      <label for="applicant_{{ $index }}_is_applicant">Is this individual applying for insurance?</label>
+      <input type="checkbox" checker ng-model = "applicant.isApplicant" id="applicant_{{ $index }}_is_applicant" name="applicant_is_applicant" >
+    </div>
+    <div class="form-row-expandable">
+      <div class="form-row" ng-show="showAgeField()">
+        <label for="applicant_{{ $index }}_age">Age</label>
+        <input type="number" ng-model="applicant.age" id="applicant_{{ $index }}_age" name="applicant_age" ng-change="updateAge(applicant)">
+      </div>
+
+      <div class="form-row" ng-show="showAgeCheckbox()">
+        <label for="applicant_{{ $index }}_age90OrOlder">Applicant is 90 or older</label>
+        <input type="checkbox" checker id="applicant_{{ $index }}_age90OrOlder" name="applicant_age90OrOlder" ng-model="applicant.age90OrOlder">
+      </div>
+
+      <div class="form-row-expandable-fields2" ng-show="checkResponsibility()">
+
+        <div class="form-row" >
+          <label for="applicant_{{ $index }}_nonParentResponsibility" >Someone other than a parent claims primary responsibility for this person</label>
+          <input type="checkbox" checker id="applicant_{{ $index }}_nonParentResponsibility" name="applicant_nonParentResponsibility" ng-model="applicant.nonParentResponsibility" ng-change="updateResponsibility(applicant)">
+        </div>
+        <div class="form-row" ng-show="applicant.nonParentResponsibility">
+          <label for="applicant_{{ $index }}_nonParentResponsibilityPerson">Who?</label>
+          <select id="applicant_{{ $index }}_nonParentResponsibilityPerson" selector ng-model="applicant.nonParentResponsibilityPerson" ng-options="appl.getName() for appl in applicants | filter:notMe" ng-change="updateResponsibility(applicant)">
+          <option value="">Not on this application</option>
+          </select>
+
+        </div>
+      </div>
+    </div>
+    <div class="form-row">
+      <label for="applicant_{{ $index }}_hours">Hours worked per week</label>
+      <input type="number" numberinput ng-model="applicant.hours" id="applicant_{{ $index }}_hours" name="applicant_hours">
+      <label for="applicant_{{ $index }}_hours" class="error" ng-show="(applicantForm.applicant_hours.$dirty || submitted) && applicantForm.applicant_hours.$invalid">This field is required.</label>
+    </div>
+    <div class="form-half-field">
+      <label for="applicant_{{ $index }}_disabled" >Disabled</label>
+      <input type="checkbox" checker id="applicant_{{ $index }}_disabled" name="applicant_disabled" ng-model="applicant.disabled">
+    </div>
+    <div class="form-half-field">
+      <label for="applicant_{{ $index }}_student">Student</label>
+      <input type="checkbox" checker id="applicant_{{ $index }}_student" name="applicant_student" ng-model="applicant.student">
+    </div>
+    <div class="form-half-field">
+      <label for="applicant_{{ $index }}_eligible">Eligible for Medicare</label>
+      <input type="checkbox" checker id="applicant_{{ $index }}_eligible" name="applicant_eligible" ng-model="applicant.eligible">
+    </div>
+    <div class="form-half-field">
+      <label for="applicant_{{ $index }}_incarcerated">Incarcerated</label>
+      <input type="checkbox" checker id="applicant_{{ $index }}_incarcerated" name="applicant_incarcerated" ng-model="applicant.incarcerated">
+    </div>
+    <div class="form-half-field">
+      <label for="applicant_{{ $index }}_lives_in_state">Lives in state</label>
+      <input type="checkbox" checker id="applicant_{{ $index }}_lives_in_state" name="applicant_lives_in_state" ng-model="applicant.livesInState">
+      <div class="form-row-expandable-fields2" ng-show="!applicant.livesInState">
+        <div class="form-row">
+          <label for="applicant_{{ $index }}_temporarily_out_of_state">Temporarily out of state</label>
+          <input type="checkbox" checker id="applicant_{{ $index }}_temporarily_out_of_state" name="applicant_temporarily_out_of_state" ng-model="applicant.temporarilyOutOfState">
+        </div>
+        <div class="form-row">
+          <label for="applicant_{{ $index }}_no_fixed_address">No fixed address</label>
+          <input type="checkbox" checker id="applicant_{{ $index }}_no_fixed_address" name="applicant_no_fixed_address" ng-model="applicant.noFixedAddress">
+        </div>
+      </div>
+    </div>
+    <div class="form-half-field">
+      <label for="applicant_{{ $index }}_claimed_by_non_applicant">Claimed as a dependent by someone not on this application</label>
+      <input type="checkbox" checker id="applicant_{{ $index }}_claimed_by_non_applicant" name="applicant_claimed_by_non_applicant" ng-model="applicant.claimedByNonApplicant">
+      <div class="form-row-expandable-fields2" ng-show="applicant.claimedByNonApplicant">
+        <div class="form-row">
+          <label for="applicant_{{ $index }}_claimer_is_out_of_state">Claimer lives out of state</label>
+          <input type="checkbox" checker id="applicant_{{ $index }}_claimer_is_out_of_state" name="applicant_{{ $index }}_claimer_is_out_of_state" ng-model="applicant.claimerIsOutOfState">
+        </div>
+      </div>
+    </div>
+    <div class="form-half-field">
+      <label for="applicant_{{ $index }}_long_term_care">In long-term care</label>
+      <input type="checkbox" checker id="applicant_{{ $index }}_long_term_care" name="applicant_long_term_care" ng-model="applicant.longTermCare">
+    </div>
+    <div class="form-half-field clear">
+      <label for="applicant_{{ $index }}_has_insurance">Has insurance</label>
+      <input type="checkbox" checker id="applicant_{{ $index }}_has_insurance" name="applicant_has_insurance" ng-model="applicant.hasInsurance">
+    </div>
+    <div class="form-half-field">
+      <label for="applicant_{{ $index }}_state_employee_health_benefits">Received state employee health benefits</label>
+      <input type="checkbox" checker id="applicant_{{ $index }}_state_employee_health_benefits" name="applicant_state_employee_health_benefits" ng-model="applicant.stateEmployeeHealthBenefits">
+    </div>
+    <div class="form-row form-row-expandable">
+      <label for="applicant_{{ $index }}_prior_insurance">Prior insurance</label>
+      <input type="checkbox" checker id="applicant_{{ $index }}_prior_insurance" name="applicant_prior_insurance" ng-model="applicant.priorInsuranceIndicator">
+      <div class="form-row-expandable-fields2" ng-show="applicant.priorInsuranceIndicator">
+        <div class="form-row">
+          <label for="applicant_{{ $index }}_prior_insurance_end_date">Prior insurance end date</label>
+          <input type="text" id="applicant_{{ $index }}_prior_insurance_end_date" name="applicant_prior_insurance_end_date" ng-model="applicant.priorInsurance.EndDate" class="date" placeholder="mm / dd / yyyy" ui-mask="99 / 99 / 9999">
+        </div>
+      </div>
+    </div>
+    <div class="form-row">
+      <label for="applicant_{{ $index }}_pregnant">Pregnant</label>
+      <input type="checkbox" checker id="applicant_{{ $index }}_pregnant" name="applicant_pregnant" ng-model="applicant.pregnant" data-exclusive="pregnant">
+      <div class="form-row-expandable-fields2" ng-show="applicant.pregnant">
+        <div class="form-row">
+          <label for="applicant_{{ $index }}_number_of_children_expected">Number of Children Expected</label>
+          <input type="number" numberinput ng-model = "applicant.numberOfChildrenExpected" id="applicant_{{ $index }}_number_of_children_expected" name="number_of_children_expected">
+        </div>
+      </div>
+    </div>
+    <div class="form-row">
+      <label for="applicant_{{ $index }}_pregnant_three_months">Pregnant within the last 3 months</label>
+      <input type="checkbox" checker id="applicant_{{ $index }}_pregnant_three_months" name="applicant_pregnant_three_months" ng-model="applicant.pregnantThreeMonths" data-exclusive="pregnant">
+    </div>
+    <div class="form-row form-row-expandable">
+      <label for="applicant_{{ $index }}_foster_care">Formerly in foster care</label>
+      <input type="checkbox" checker id="applicant_{{ $index }}_foster_care" name="applicant_foster_care" ng-model="applicant.formerlyFosterCare">
+      <div class="form-row-expandable-fields2" ng-show="applicant.formerlyFosterCare">
+        <div class="form-row">
+          <label for="applicant_{{ $index }}_foster_care_had_medicaid">Had Medicaid during foster
+            care</label>
+          <input type="checkbox" checker id="applicant_{{ $index }}_foster_care_had_medicaid" name="applicant_foster_care_had_medicaid" ng-model="applicant.fosterCare.hadMedicaid">
+        </div>
+        <div class="form-row">
+          <label for="applicant_{{ $index }}_foster_care_age_left">Age left foster care</label>
+          <input type="number" numberinput id="applicant_{{ $index }}_foster_care_age_left" name="applicant_foster_care_age_left" ng-model="applicant.fosterCare.ageLeftFosterCare" ng-required="applicant.formerlyFosterCare">
+        </div>
+        <div class="form-row">
+          <label for="applicant_{{ $index }}_foster_care_state">Foster care state</label>
+          <select id="applicant_{{ $index }}_foster_care_state" name="applicant_foster_care_state" selector ng-model="applicant.fosterCare.state" ng-options="state as state.name for state in states" ng-required="applicant.formerlyFosterCare">
+          </select>
+        </div>
+      </div>
+    </div>
+    <div class="form-row form-row-expandable">
+      <label for="applicant_{{ $index }}_citizen">US citizen</label>
+      <input type="checkbox" checker ng-model="applicant.citizen" id="applicant_{{ $index }}_citizen" name="applicant_citizen">
+      <div class="form-row-expandable-fields2" ng-show="!applicant.citizen">
+        <div class="form-row form-row-expandable">
+          <label for="applicant_{{ $index }}_citizen_lawful">Lawfully present in the US</label>
+          <input type="checkbox" checker ng-model="applicant.nonCitizen.lawful" id="applicant_{{ $index }}_citizen_lawful" name="applicant_citizen_lawful">
+        </div>
+        <div class="form-row-expandable-fields2" ng-show="applicant.nonCitizen.lawful">
+          <div class="form-row">
+            <label for="applicant_{{ $index }}_lawful_immigration_status_code">Immigration status</label>
+            <select selector ng-model="applicant.lawful.immigrationStatus" name="applicant_{{ $index }}_lawful_immigration_status" id="applicant_{{ $index }}_lawful_immigration_status" ng-options="status as status.name for status in appStatuses">
+            </select>
+          </div>
+          <div class="form-row-expandable-fields2" ng-show="qualNonCitizenStatuses.indexOf(applicant.lawful.immigrationStatus) != -1">
+            <div class="form-row" ng-show="applicant.lawful.immigrationStatus.code == '01'">
+              <label for="applicant_{{ $index }}_qnc_amerasian">Amerasian status</label>
+              <input type="checkbox" checker ng-model="applicant.qnc.amerasian" id="applicant_{{ $index }}_qnc_amerasian" name="applicant_qnc_amerasian">
+            </div>
+            <div class="form-row">
+              <label for="applicant_{{ $index }}_qnc_veteran">Veteran status</label>
+              <input type="checkbox" checker ng-model="applicant.qnc.veteran" id="applicant_{{ $index }}_qnc_veteran" name="applicant_qnc_veteran">
+            </div>
+            <div class="form-row">
+              <label for="applicant_{{ $index }}_qnc_human_trafficking">Victim of human trafficking</label>
+              <input type="checkbox" checker ng-model="applicant.qnc.humanTraffickingVictim" id="applicant_{{ $index }}_qnc_human_trafficking" name="applicant_qnc_human_trafficking">
+            </div>
+            <div class="form-row" ng-show="['02', '03', '04', '09'].indexOf(applicant.lawful.immigrationStatus.code) != -1 || (applicant.lawful.immigrationStatus.code == '01' && applicant.qnc.amerasian)">
+              <label for="applicant_{{ $index }}_qnc_seven_year_start_date">{{ applicant.lawful.immigrationStatus.startDate }}</label>
+              <input type="text" ng-model="applicant.qnc.sevenYearStartDate" id="applicant_{{ $index }}_qnc_seven_year_start_date" name="applicant_qnc_seven_year_start_date" class="date" ui-mask="99 / 99 / 9999" placeholder="mm / dd / yyyy">
+              <label for="applicant_{{ $index }}_qnc_seven_year_start_date" class="error" ng-show="(applicant.lawful.immigrationStatus.startDate.$dirty  || submitted)">This field is required.</label>
+            </div>
+            <div class="form-row">
+              <label for="applicant_{{ $index }}_qnc_five_year_bar">Five Year Bar applies to applicant</label>
+              <input type="checkbox" checker ng-model="applicant.qnc.fiveYearBar" id="applicant_{{ $index }}_qnc_five_year_bar" name="applicant_qnc_five_year_bar">
+            </div>
+            <div class="form-row">
+              <label for="applicant_{{ $index }}_qnc_five_year_bar_met">Five Year Bar has been met</label>
+              <input type="checkbox" checker ng-model="applicant.qnc.fiveYearBarMet" id="applicant_{{ $index }}_qnc_five_year_bar_met" name="applicant_qnc_five_year_bar_met">
+            </div>
+            <div class="form-row">
+              <label for="applicant_{{ $index }}_qnc_forty_quarters">Applicant has 40 Title II work quarters</label>
+              <input type="checkbox" checker ng-model="applicant.qnc.fortyQuarters" id="applicant_{{ $index }}_qnc_fortyQuarters" name="applicant_qnc_fortyQuarters">
+            </div>
+          </div>
+          <div class="form-row">
+            <label for="applicant_{{ $index }}_lawful_refugee_assistance">Eligible for refugee medical assistance</label>
+            <input type="checkbox" checker ng-model="applicant.lawful.refugeeMedicalAssistanceEligible" id="applicant_{{ $index }}_lawful_refugee_assistance" name="applicant_lawful_refugee_assistance">
+            <div class="form-row-expandable-fields2" ng-show="applicant.lawful.refugeeMedicalAssistanceEligible">
+              <div class="form-row">
+                <label for="applicant_{{ $index }}_refugee_assistance_start_date">Refugee medical assistance start date</label>
+                <input type="text" ng-model="applicant.refugeeMedicalAssistance.startDate" id="applicant_{{ $index }}_refugee_assistance_start_date" name="applicant_refugee_assistance_start_date" class="date" ui-mask="99 / 99 / 9999" placeholder="mm / dd / yyyy">
+                <label for="applicant_{{ $index }}_refugee_assistance_start_date" class="error" ng-show="(applicant.refugeeMedicalAssistance.startDate.$dirty  || submitted)">This field is required.</label>
+              </div>
+            </div>
+          </div>
+        </div>        
+      </div>        
+    </div>
+    <div class="form-row form-row-expandable">
+      <label for="applicant_{{ $index }}_income_taxes_required">Required to file income
+        taxes</label>
+      <input type="checkbox" checker id="applicant_{{ $index }}_income_taxes_required" name="applicant_income_taxes_required" ng-model="applicant.incomeTaxesRequired">
+      <div class="form-row-expandable-fields2 cf showOtherIncome" >
+
+        <div incomegroup monthlyLabel="Monthly Wages" annualLabel="Annual Wages" ng-model="applicant.incomeTaxes.wages"></div>  
+
+        <button ng-click="showOtherIncome = !showOtherIncome" type="button" class="add-applicant">Other income and deductions</button>
+        <div class="form-row-expandable-fields2 cf" ng-show="showOtherIncome">
+            <div incomegroup monthlyLabel="Monthly capital gains or losses" annualLabel="Annual capital gains or losses" ng-model="applicant.incomeTaxes.capitalGains"></div>
+            <div incomegroup monthlyLabel="Monthly taxable interest" annualLabel="Annual taxable interest" ng-model="applicant.incomeTaxes.taxableInterest"></div>      
+            <div incomegroup monthlyLabel="Monthly pensions and annuities taxable amount" annualLabel="Annual pensions and annuities taxable amount" ng-model="applicant.incomeTaxes.pensions"></div>
+            <div incomegroup monthlyLabel="Monthly tax-exempt interest" annualLabel="Annual tax-exempt interest" ng-model="applicant.incomeTaxes.taxExemptInterest"></div>
+            <div incomegroup monthlyLabel="Monthly farm income or loss" annualLabel="Annual farm income or loss" ng-model="applicant.incomeTaxes.farmIncome"></div>
+            <div incomegroup monthlyLabel="Monthly taxable refunds, credits, or offsets of state and local income taxes" annualLabel="Annual taxable refunds, credits, or offsets of state and local income taxes" ng-model="applicant.incomeTaxes.taxableRefunds"></div>
+            <div incomegroup monthlyLabel="Monthly unemployment compensation" annualLabel="Annual unemployment compensation" ng-model="applicant.incomeTaxes.unemployment"></div>
+            <div incomegroup monthlyLabel="Monthly alimony" annualLabel="Annual alimony" ng-model="applicant.incomeTaxes.alimony"></div>
+            <div incomegroup monthlyLabel="Other monthly income" annualLabel="Other annual income" ng-model="applicant.incomeTaxes.other"></div>
+            <div incomegroup monthlyLabel="Monthly MAGI deductions" annualLabel="Annual MAGI deductions" ng-model="applicant.incomeTaxes.MAGIDeductions"></div>
+          
+        </div>
+
+      </div>
+
+    </div>
+    
+    <button type="button" class="remove-applicant" ng-click="removeApplicant(applicant)" tabindex="-1">Remove This Applicant</button>
+
+  </fieldset>
+
+  <button ng-click="addApplicant()" type="button" class="add-applicant">Add Another Applicant</button>
+
+  <fieldset ng-repeat="taxReturn in taxReturns" ng-controller="TaxReturnController">
+    <legend>Tax Return <span class="applicant-number">{{$index+1}}</span></legend>
+    <div ng-show="!showFilers()">
+      Please enter some applicants.
+    </div>
+
+    <div ng-show="showFilers()">
+      <h3>Filers</h3>
+      <div class="form-row" ng-repeat="filer in taxReturn.filers">
+        <label for="filer_{$index}">Filer</label>
+        <select id="filer_{$index}" selector ng-model="taxReturn.filers[$index]" ng-options="applicant.getName() for applicant in applicants"></select>
+        <button type="button" class="remove-filer" ng-click="removeFiler(filer)" tabindex="-1"></button>
+      </div>
+      <div class="form-row" ng-show="canAddFiler()">
+        <label for="filer_{$index}">Filer</label>
+        <select id="filer_{$index}" selector ng-model="inputs.newFiler" ng-options="applicant.getName() for applicant in applicants"></select>
+      </div>
+    </div>
+
+    <div ng-show="showDependents()">
+      <h3>Dependents</h3>
+      <div class="form-row" ng-repeat="dependent in taxReturn.dependents">
+        <label for="dependent_{$index}">Dependent</label>
+        <select id="dependent_{$index}" selector ng-model="taxReturn.dependents[$index]" ng-options="applicant.getName() for  applicant in applicants"></select>
+        <button type="button" class="remove-filer" ng-click="removeDependent(dependent)" tabindex="-1"></button>
+      </div>
+      <div class="form-row" ng-show="canAddDependent()">
+        <label for="newdependent_{$index}">Dependent</label>
+        <select id="newdependent_{$index}" selector ng-model="inputs.newDependent" ng-options="applicant.getName() for applicant in applicants"></select>
+      </div>
+    </div>
+
+    <button type="button" class="remove-applicant" ng-click="removeTaxReturn(taxReturn)" tabindex="-1">Remove This Tax Return</button>
+
+  </fieldset>
+  
+  <button ng-click="addTaxReturn()" type="button" class="add-applicant">Add Another Tax Return</button>
+  <fieldset ng-show="showHouseholds()">
+    <legend>Physical Households</legend>
+
+    <div class="householdbucket" ng-repeat="household in application.households" btf-dragon="person in household">
+      <div class="householdperson">{{person.getName()}}</div>
+    </div>
+    <div class="newHouseholdBucketWrapper" ng-show="showNewHousehold()">
+      <div class="newHouseholdBucket" btf-dragon="person in newHousehold">
+            <div>{{person.getName()}}</div>
+      </div>
+      <span class="newHouseholdBucketLabel">Drag a person here to add a new physical household</span>
+
+    </div>
+  </fieldset>
+  <div class="errorbox" ng-show="errorMessage">
+    <label class="toperror">Error: {{errorMessage}}</label>
+  </div>
+  <div ng-show="!disableSubmit() && application.state"> 
+    <button type="submit">Check Eligibility</button>
+    <button type="button" class="submitlike" ng-click="exportApplication()">Export Application</button>
+  </div>
+  <div ng-show="disableSubmit() || !(application.state)"> 
+    <button class="disabledbutton" ng-click="" disabled>Check Eligibility</button>
+    <button class="disabledbutton" ng-click="" disabled>Export Application</button>
+  </div>
+</form>
+
+<div class="footer">
+  <br><br>
+  <a class="footer-link" href="https://s3.amazonaws.com/bluelabs-mitc/Blue+Labs+Privacy+Policy+for+MAGI+(05.18.15).pdf">Privacy</a> | <a class="footer-link" href="https://s3.amazonaws.com/bluelabs-mitc/Support+Request+Procedure+for+MAGI+in+the+Cloud+-+20150611.pdf">Support</a>
+</div>
+

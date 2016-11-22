@@ -1,0 +1,81 @@
+<div class="person" ng-repeat="applicant in applicants">
+  
+  <div class="head">
+    
+    <h3>{{ application.getApplicantByUid(applicant["Person ID"]).getName() }}</h3>
+    <br>
+    <div class="eligibility-div">
+      <span eligibility data-program='Medicaid' data-value='{{applicant["Medicaid Eligible"]}}'></span>
+      <span class="threshold" ng-show="applicant['Category'] != 'None'">Eligibility Threshold: {{ applicant["Category Threshold"] }}</span>  
+      <span class="category" ng-show="applicant['Category'] == 'None'">No Category</span>
+      <span class="category" ng-show="applicant['Category'] != 'None'">{{applicant["Category"]}}</span>
+      <div class="eligibility-explanation" ng-show="applicant['Medicaid Eligible'] == 'N'">
+        <div ng-repeat="reason in applicant['Ineligibility Reason']">
+          {{ reason }}
+        </div>
+      </div>
+    </div>
+    <div class="eligibility-div" ng-show="applicant['Medicaid Eligible'] == 'N'">
+      <span eligibility data-program='CHIP' data-value='{{applicant["CHIP Eligible"]}}'></span>
+      <span class="threshold" ng-show="applicant['CHIP Category'] != 'None'">Eligibility Threshold: {{ applicant["CHIP Category Threshold"] }}</span>  
+      <span class="category" ng-show="applicant['CHIP Category'] == 'None'">No Category</span>
+      <span class="category" ng-show="applicant['CHIP Category'] != 'None'">{{applicant["CHIP Category"]}}</span>
+      <div class="eligibility-explanation" ng-show="applicant['CHIP Eligible'] == 'N'">
+        <div ng-repeat="reason in applicant['CHIP Ineligibility Reason']">
+          {{ reason }}
+        </div>
+      </div>
+    </div>
+    <div class="eligibility-div" ng-show="applicant['Determinations']['Emergency Medicaid']['Indicator'] == 'Y'">
+      <span eligibility data-program='Emergency Medicaid' data-value="{{applicant['Determinations']['Emergency Medicaid']['Indicator']}}"></span>
+    </div>
+    <div class="eligibility-div" ng-show="applicant['Determinations']['Refugee Medical Assistance']['Indicator'] == 'Y'">
+      <span eligibility data-program='Refugee Medical Assistance' data-value="{{applicant['Determinations']['Refugee Medical Assistance']['Indicator']}}"></span>
+    </div>
+
+  </div>
+  <div class="details">
+    <h4>HOUSEHOLD:
+      <span ng-repeat="person in applicant['Medicaid Household']['People']">
+        {{ application.getApplicantByUid(person).getName() }}
+        <span ng-show=" ! $last ">, </span>
+      </span>
+    </h4>
+    <h4>MAGI: {{applicant["Medicaid Household"]["MAGI"]}} ({{applicant["Medicaid Household"]["MAGI as Percentage of FPL"]}}% of FPL)</h4>
+    <h4>DETERMINATIONS</h4>
+    <div class="determinations">
+      <h5>Yes</h5>
+      <ul>
+        <li ng-repeat="determination in applicant.cleanDets | filter:yDetermination">{{determination.item}}</li>
+      </ul>
+    </div>
+    <div class="determinations">
+      <h5>No</h5>
+      <table>
+        <tr ng-repeat="determination in applicant.cleanDets | filter:{ indicator: 'N'}">
+          <td class="item">
+            <b>{{determination.item}}</b>
+            <br>
+            {{determination.reason}}
+          </td>
+        </tr>
+      </table>
+      </div>
+      <div class="determinations">
+        <h5>Not Applicable</h5>
+        <ul>
+          <li ng-repeat="determination in applicant.cleanDets | filter:{ indicator: 'X'}">{{determination.item}}</li>
+        </ul>
+      </div>
+      <div style="clear: both;"></div>
+    </div>
+  </div>
+  
+</div>
+<button ng-click="returnToForm()" type="submit">Return to Application</button>
+<button type="submit" ng-click="exportApplication()">Export Application</button>
+
+<div class="footer">
+  <br><br>
+  <a class="footer-link" href="https://s3.amazonaws.com/bluelabs-mitc/Blue+Labs+Privacy+Policy+for+MAGI+(05.18.15).pdf">Privacy</a> | <a class="footer-link" href="https://s3.amazonaws.com/bluelabs-mitc/Support+Request+Procedure+for+MAGI+in+the+Cloud+-+20150611.pdf">Support</a>
+</div>
